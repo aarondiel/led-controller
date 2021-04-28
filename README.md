@@ -11,13 +11,13 @@ i recommend to create a gpio user group for this.
 ```sh
 sudo groupadd gpio
 
-// change $user for your username
+# change $user for your username
 sudo usermod $user -aG gpio
 
-// permanently channge group of gpio devices
+# permanently channge group of gpio devices
 sudo sh -c 'echo SUBSYSTEM==\"gpio\", GROUP=\"gpio\", MODE=\"0660\" >> /etc/udev/rules.d/raspberrypi.rules'
 
-// restart udev
+# restart udev
 sudo udevadm control --reload
 ```
 
@@ -34,4 +34,13 @@ to copy the project to a ssh server and run it remotely you can use
 
 ```sh
 make run
+```
+
+## configuration
+
+to project uses a `settings.env` to read in custom user settings.
+the structure is as follows:
+
+```sh
+SSH_TARGET=user@127.0.0.1
 ```
