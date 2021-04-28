@@ -17,7 +17,4 @@ $(DIRS):
 
 run:
 	scp -r ./src makefile settings.env $(SSH_TARGET):~/leds
-	ssh $(SSH_TARGET) "cd leds && make && echo && ./gpio && echo"
-
-permissions:
-	sudo sh -c "chgrp gpio /dev/gpiochip* && chmod g+rw /dev/gpiochip*"
+	ssh -t $(SSH_TARGET) "cd leds && make && echo && ./gpio && echo"

@@ -14,8 +14,11 @@ sudo groupadd gpio
 // change $user for your username
 sudo usermod $user -aG gpio
 
-sudo chgrp gpio /dev/gpiochip*
-sudo chmod g+rw /dev/gpiochip*
+// permanently channge group of gpio devices
+sudo sh -c 'echo SUBSYSTEM==\"gpio\", GROUP=\"gpio\", MODE=\"0660\" >> /etc/udev/rules.d/raspberrypi.rules'
+
+// restart udev
+sudo udevadm control --reload
 ```
 
 ## compiling and runnning
