@@ -22,7 +22,7 @@ typedef struct {
 	int fd;
 	char name[32];
 	char label[32];
-	gpioline *lines;
+	gpioline **lines;
 	unsigned int linecount;
 } gpiochip;
 

@@ -23,11 +23,11 @@ static bool getLineInfo(int fd, struct gpioline_info *info, int offset) {
 
 void closeGpioChip(gpiochip *chip) {
 	for (int i = 0; i < chip->linecount; i++) {
-		if (chip->lines[i].fd == -1) {
+		if (chip->lines[i] == NULL)
 			break;
-		}
 
-		close(chip->lines[i].fd);
+		close(chip->lines[i]->fd);
+		free(chip->lines[i]);
 	}
 
 	close(chip->fd);
@@ -53,11 +53,11 @@ gpiochip *openGpioChip(char *path) {
 	chip->fd = fd;
 	strcpy(chip->name, info.name);
 	strcpy(chip->label, info.label);
-	chip->lines = calloc(chip->linecount, sizeof(gpioline));
 	chip->linecount = info.lines;
+	chip->lines = calloc(chip->linecount, sizeof(gpioline*));
 
 	for (int i = 0; i < chip->linecount; i++)
-		chip->lines[i].fd = -1;
+		chip->lines[i] = NULL;
 
 	return chip;
 
@@ -90,20 +90,22 @@ bool getLine(gpiochip *chip, unsigned int offset, unsigned long mode) {
 	if (rv < 0)
 		goto error;
 
+	gpioline *line = malloc(sizeof(gpioline));
+	line->fd = req.fd;
+	line->offset = offset;
+	strcpy(line->name, info.name);
+
 	for (int i = 0; i < chip->linecount; i++) {
-		if (chip->lines[i].fd == -1) {
-			chip->lines[i].fd = req.fd;
-			chip->lines[i].offset = offset;
-			strcpy(chip->lines[i].name, info.name);
+		if (chip->lines[i] == NULL) {
+			chip->lines[i] = line;
 			return 0;
 		}
 
 		// line has been requested before
-		if (chip->lines[i].offset == offset) {
-			close(chip->lines[i].fd);
-			chip->lines[i].offset = offset;
-			chip->lines[i].fd = req.fd;
-			strcpy(chip->lines[i].name, info.name);
+		if (chip->lines[i]->offset == offset) {
+			close(chip->lines[i]->fd);
+			free(chip->lines[i]);
+			chip->lines[i] = line;
 			return 0;
 		}
 	}

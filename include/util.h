@@ -2,6 +2,7 @@
 
 #include <time.h>
 #include <stdbool.h>
+#include <stdio.h>
 
-bool duplicateElements(unsigned int *arr, unsigned int arrcount, unsigned int maxvalue);
+void nanodelay(unsigned int nanosec);
 void delay(unsigned int sec);

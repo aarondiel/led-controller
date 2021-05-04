@@ -1,24 +1,25 @@
 #include "util.h"
 
-// tests if arr contains duplicate values or values outside of 0 or maxvalue
-bool duplicateElements(unsigned int *arr, unsigned int arrcount, unsigned int maxvalue) {
-	unsigned int counter[maxvalue];
+void printBin(int n) {
+	printf("0b");
 
-	for (int i = 0; i < arrcount; i++) {
-		if (arr[i] < 0 || i > maxvalue)
-			return true;
-		
-		if (++counter[arr[i]] > 1)
-			return true;
+	while (n) {
+		if (n & 1)
+			printf("1");
+		else
+			printf("0");
+
+		n >>= 1;
 	}
 
-	return false;
+	printf("\n");
 }
 
-void delay(unsigned int sec) {
-	clock_t endtime = time(0) + sec;
+void nanodelay(unsigned int nanosec) {
+	struct timespec req;
 
-	while (time(0) < endtime) {
-		;
-	}
+	req.tv_sec = 0;
+	req.tv_nsec = nanosec;
+
+	nanosleep(&req, NULL);
 }
