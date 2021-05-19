@@ -4,5 +4,11 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-void nanodelay(unsigned int nanosec);
-void delay(unsigned int sec);
+struct color {
+	char g;
+	char r;
+	char b;
+};
+
+void addNanoSec(struct timespec *clock, unsigned long nsec);
+void printBin(int n);

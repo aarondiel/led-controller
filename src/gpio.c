@@ -1,139 +1,95 @@
 #include "gpio.h"
 
+bcm2835 *openChip() {
+	bcm2835 *chip = malloc(sizeof(bcm2835));
+	FILE *fp = fopen("/proc/device-tree/soc/ranges", "rb");
 
-static bool getChipInfo(int fd, struct gpiochip_info *info) {
-	int rv = ioctl(fd, GPIO_GET_CHIPINFO_IOCTL, info);
-
-	if (rv < 0)
-		return 1;
-
-	return 0;
-}
-
-static bool getLineInfo(int fd, struct gpioline_info *info, int offset) {
-	info->line_offset = offset;
-
-	int rv = ioctl(fd, GPIO_GET_LINEINFO_IOCTL, info);
-
-	if (rv < 0)
-		return 1;
-
-	return 0;
-}
-
-void closeGpioChip(gpiochip *chip) {
-	for (int i = 0; i < chip->linecount; i++) {
-		if (chip->lines[i] == NULL)
-			break;
-
-		close(chip->lines[i]->fd);
-		free(chip->lines[i]);
-	}
-
-	close(chip->fd);
-	free(chip->lines);
-	free(chip);
-}
-
-gpiochip *openGpioChip(char *path) {
-	int fd = open(path, O_RDWR);
-
-	if (fd < 0) {
-		printf("couldn't open device:\n%s\n", strerror(errno));
+	if (fp == NULL)
 		goto error;
-	}
 
-	struct gpiochip_info info;
-	if (getChipInfo(fd, &info)) {
-		printf("couldn't get chip info:\n%s\n", strerror(errno));
+	unsigned char buf[4];
+
+	fseek(fp, 4, SEEK_SET);
+	fread(buf, sizeof(unsigned char), 4, fp);
+	chip->peripheral_base = buf[0] << 24 | buf[1] << 16 | buf[2] << 8 | buf[3];
+
+	fseek(fp, 8, SEEK_SET);
+	fread(buf, sizeof(unsigned char), 4, fp);
+	chip->peripheral_size = buf[0] << 24 | buf[1] << 16 | buf[2] << 8 | buf[3];
+
+	fclose(fp);
+
+	int fd = open("/dev/mem", O_RDWR);
+
+	if (fd < 0)
 		goto error;
-	}
 
-	gpiochip *chip = malloc(sizeof(gpiochip));
-	chip->fd = fd;
-	strcpy(chip->name, info.name);
-	strcpy(chip->label, info.label);
-	chip->linecount = info.lines;
-	chip->lines = calloc(chip->linecount, sizeof(gpioline*));
+	chip->peripherals = mmap(
+		NULL,
+		chip->peripheral_size,
+		PROT_READ | PROT_WRITE,
+		MAP_SHARED,
+		fd,
+		chip->peripheral_base
+	);
+	close(fd);
 
-	for (int i = 0; i < chip->linecount; i++)
-		chip->lines[i] = NULL;
+	if (chip->peripherals == MAP_FAILED)
+		goto error;
+
+	chip->gpio = (gpio_peripherals *)(chip->peripherals + 0x80000);
 
 	return chip;
 
 error:
-	close(fd);
+	free(chip);
 	return NULL;
 }
 
-// append gpioline to gpiochip
-bool getLine(gpiochip *chip, unsigned int offset, unsigned long mode) {
-	if (mode != GPIOHANDLE_REQUEST_OUTPUT && mode != GPIOHANDLE_REQUEST_INPUT) {
-		errno = EINVAL;
-		goto error;
-	}
-
-	struct gpioline_info info;
-	if (getLineInfo(chip->fd, &info, offset))
-		goto error;
-
-	struct gpiohandle_request req = {
-		.flags = mode,
-		.lines = 1,
-		.lineoffsets = { 0 },
-		.default_values = { 0 },
-		.consumer_label = "aaron's cool program"
-	};
-	req.lineoffsets[0] = offset;
-	int rv = ioctl(chip->fd, GPIO_GET_LINEHANDLE_IOCTL, &req);
-
-	if (rv < 0)
-		goto error;
-
-	gpioline *line = malloc(sizeof(gpioline));
-	line->fd = req.fd;
-	line->offset = offset;
-	strcpy(line->name, info.name);
-
-	for (int i = 0; i < chip->linecount; i++) {
-		if (chip->lines[i] == NULL) {
-			chip->lines[i] = line;
-			return 0;
-		}
-
-		// line has been requested before
-		if (chip->lines[i]->offset == offset) {
-			close(chip->lines[i]->fd);
-			free(chip->lines[i]);
-			chip->lines[i] = line;
-			return 0;
-		}
-	}
-	return 1;
-
-error:
-	printf("couln't request line:\n%s\n", strerror(errno));
-	return 1;
+void closeChip(bcm2835 *chip) {
+	munmap(chip->peripherals, chip->peripheral_size);
+	free(chip);
 }
 
-bool setValue(gpioline *line, bool value) {
-	if (line->fd == -1) {
-		errno =	EBADF;
-		goto error;
-	}
+bool setFunction(gpio_peripherals *gpio, unsigned char pin, unsigned char function) {
+	if (pin > 53 || function > 7)
+		return 1;
 
-	struct gpiohandle_data data;
+	unsigned int bitshift = (pin % 10) * 3;
+	unsigned int bitmask = ~(0b111 << bitshift);
+	unsigned int payload = function << bitshift;
 
-	data.values[line->offset] = value;
-
-	int rv = ioctl(line->fd, GPIOHANDLE_SET_LINE_VALUES_IOCTL, &data);
-
-	if (rv < 0)
-		goto error;
+	gpio->function_select[pin / 10] = (gpio->function_select[pin / 10] & bitmask) | payload;
 
 	return 0;
+}
 
-error:
-	printf("couldn't set value:\n%s\n", strerror(errno));
-	return 1;
+static bool clearLine(gpio_peripherals *gpio, unsigned char pin) {
+	printf("write 0 to pin %d\n", pin);
+	if (pin > 53)
+		return 1;
+
+	gpio->clear[pin / 32] |= 1 << (pin % 32);
+
+	return 0;
+}
+
+bool writeLine(gpio_peripherals *gpio, unsigned char pin, bool state) {
+	printf("write 1 to pin %d\n", pin);
+	if (pin > 53)
+		return 1;
+
+	if (!state)
+		return clearLine(gpio, pin);
+
+	gpio->set[pin / 32] |= 1 << (pin % 32);
+
+	return 0;
+}
+
+bool readLine(gpio_peripherals *gpio, unsigned char pin) {
+	if (pin > 53)
+		return 1;
+
+	return gpio->level[pin / 32] & (1 << (pin % 32));
 }
