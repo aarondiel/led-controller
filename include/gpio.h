@@ -5,6 +5,7 @@
 #include <sys/mman.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include "pwm.h"
 
 typedef struct {
 	unsigned int function_select[6];
@@ -39,6 +40,7 @@ typedef struct {
 	unsigned int peripheral_size;
 	unsigned int *peripherals;
 	gpio_peripherals *gpio;
+	pwm_peripherals *pwm;
 } bcm2835;
 
 enum gpio_function {

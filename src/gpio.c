@@ -38,6 +38,7 @@ bcm2835 *openChip() {
 		goto error;
 
 	chip->gpio = (gpio_peripherals *)(chip->peripherals + 0x80000);
+	chip->pwm = (pwm_peripherals *)(chip->peripherals + 0x83000);
 
 	return chip;
 
@@ -65,7 +66,6 @@ bool setFunction(gpio_peripherals *gpio, unsigned char pin, unsigned char functi
 }
 
 static bool clearLine(gpio_peripherals *gpio, unsigned char pin) {
-	printf("write 0 to pin %d\n", pin);
 	if (pin > 53)
 		return 1;
 
@@ -75,7 +75,6 @@ static bool clearLine(gpio_peripherals *gpio, unsigned char pin) {
 }
 
 bool writeLine(gpio_peripherals *gpio, unsigned char pin, bool state) {
-	printf("write 1 to pin %d\n", pin);
 	if (pin > 53)
 		return 1;
 
