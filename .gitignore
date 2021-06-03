@@ -1,5 +1,5 @@
 settings.env
-build/*
-gpio
 src/test.c
+build/*
 test
+controller
