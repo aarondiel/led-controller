@@ -1,6 +1,6 @@
 #include "bcm2835.h"
 
-static void bcm2835_delay(unsigned long millis) {
+static void bcm2835_delay(u_int64_t millis) {
 	struct timespec sleep_timer = {
 		.tv_sec = millis / 1000,
 		.tv_nsec = (millis % 1000) * 1000000
@@ -9,20 +9,20 @@ static void bcm2835_delay(unsigned long millis) {
 	nanosleep(&sleep_timer, NULL);
 }
 
-bool gpio_set_function(gpio_peripherals *gpio, unsigned char pin, unsigned char function) {
+bool gpio_set_function(gpio_peripherals *gpio, u_int8_t pin, u_int8_t function) {
 	if (pin > 53 || function > 7)
 		return 1;
 
-	unsigned int bitshift = (pin % 10) * 3;
-	unsigned int bitmask = ~(0b111 << bitshift);
-	unsigned int payload = function << bitshift;
+	u_int32_t bitshift = (pin % 10) * 3;
+	u_int32_t bitmask = ~(0b111 << bitshift);
+	u_int32_t payload = function << bitshift;
 
 	gpio->function_select[pin / 10] = (gpio->function_select[pin / 10] & bitmask) | payload;
 
 	return 0;
 }
 
-static bool gpio_clear_line(gpio_peripherals *gpio, unsigned char pin) {
+static bool gpio_clear_line(gpio_peripherals *gpio, u_int8_t pin) {
 	if (pin > 53)
 		return 1;
 
@@ -31,7 +31,7 @@ static bool gpio_clear_line(gpio_peripherals *gpio, unsigned char pin) {
 	return 0;
 }
 
-bool gpio_write_line(gpio_peripherals *gpio, unsigned char pin, bool state) {
+bool gpio_write_line(gpio_peripherals *gpio, u_int8_t pin, bool state) {
 	if (pin > 53)
 		return 1;
 
@@ -43,14 +43,14 @@ bool gpio_write_line(gpio_peripherals *gpio, unsigned char pin, bool state) {
 	return 0;
 }
 
-bool gpio_read_line(gpio_peripherals *gpio, unsigned char pin) {
+bool gpio_read_line(gpio_peripherals *gpio, u_int8_t pin) {
 	if (pin > 53)
 		return 1;
 
 	return gpio->level[pin / 32] & (1 << (pin % 32));
 }
 
-bool gpclock_set_clock(gpclock_peripherals *clock, short integer, short floating) {
+bool gpclock_set_clock(gpclock_peripherals *clock, u_int16_t integer, u_int16_t floating) {
 	if (integer > 0xfff || floating > 0xfff)
 		return 1;
 
@@ -115,14 +115,14 @@ bcm2835 *bcm2835_open() {
 	if (fp == NULL)
 		goto error;
 
-	unsigned char buf[4];
+	u_int8_t buf[4];
 
 	fseek(fp, 4, SEEK_SET);
-	fread(buf, sizeof(unsigned char), 4, fp);
+	fread(buf, sizeof(u_int8_t), 4, fp);
 	chip->peripheral_base = buf[0] << 24 | buf[1] << 16 | buf[2] << 8 | buf[3];
 
 	fseek(fp, 8, SEEK_SET);
-	fread(buf, sizeof(unsigned char), 4, fp);
+	fread(buf, sizeof(u_int8_t), 4, fp);
 	chip->peripheral_size = buf[0] << 24 | buf[1] << 16 | buf[2] << 8 | buf[3];
 
 	fclose(fp);

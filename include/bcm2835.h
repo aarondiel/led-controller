@@ -26,7 +26,7 @@ typedef struct {
 	bool use_fifo1: 1;
 	bool: 1;
 	bool m_s1: 1;
-	short: 16;
+	u_int16_t: 16;
 } pwm_ctl_register;
 
 typedef struct {
@@ -42,13 +42,13 @@ typedef struct {
 	bool state1: 1;
 	bool state2: 1;
 	bool state3: 1;
-	unsigned int: 20;
+	u_int32_t: 20;
 } pwm_status_register;
 
 typedef struct {
-	char dreq_theshold: 8;
-	char panic_theshold: 8;
-	short: 15;
+	u_int8_t dreq_theshold: 8;
+	u_int8_t panic_theshold: 8;
+	u_int16_t: 15;
 	bool enable: 1;
 } pwm_dmac_register;
 
@@ -56,11 +56,13 @@ typedef struct {
 	pwm_ctl_register control;
 	pwm_status_register status;
 	pwm_dmac_register dma;
-	unsigned int range0: 32;
-	unsigned int data0: 32;
-	unsigned int fifo0: 32;
-	unsigned int range1: 32;
-	unsigned int data1: 32;
+	u_int32_t: 32;
+	u_int32_t range0: 32;
+	u_int32_t data0: 32;
+	u_int32_t fifo0: 32;
+	u_int32_t: 32;
+	u_int32_t range1: 32;
+	u_int32_t data1: 32;
 } pwm_peripherals;
 
 enum {
@@ -69,31 +71,31 @@ enum {
 };
 
 typedef struct {
-	unsigned int function_select[6];
-	unsigned int: 32;
-	unsigned int set[2];
-	unsigned int: 32;
-	unsigned int clear[2];
-	unsigned int: 32;
-	unsigned int level[2];
-	unsigned int: 32;
-	unsigned int event_status[2];
-	unsigned int: 32;
-	unsigned int rising_edge_detect_enable[2];
-	unsigned int: 32;
-	unsigned int falling_edge_detect_enable[2];
-	unsigned int: 32;
-	unsigned int high_detect_enable[2];
-	unsigned int: 32;
-	unsigned int low_detect_enable[2];
-	unsigned int: 32;
-	unsigned int async_rising_edge_detect[2];
-	unsigned int: 32;
-	unsigned int async_falling_edge_detect[2];
-	unsigned int: 32;
-	unsigned int pull_up_down_enable;
-	unsigned int pull_up_down_clock[2];
-	unsigned int: 32;
+	u_int32_t function_select[6];
+	u_int32_t: 32;
+	u_int32_t set[2];
+	u_int32_t: 32;
+	u_int32_t clear[2];
+	u_int32_t: 32;
+	u_int32_t level[2];
+	u_int32_t: 32;
+	u_int32_t event_status[2];
+	u_int32_t: 32;
+	u_int32_t rising_edge_detect_enable[2];
+	u_int32_t: 32;
+	u_int32_t falling_edge_detect_enable[2];
+	u_int32_t: 32;
+	u_int32_t high_detect_enable[2];
+	u_int32_t: 32;
+	u_int32_t low_detect_enable[2];
+	u_int32_t: 32;
+	u_int32_t async_rising_edge_detect[2];
+	u_int32_t: 32;
+	u_int32_t async_falling_edge_detect[2];
+	u_int32_t: 32;
+	u_int32_t pull_up_down_enable;
+	u_int32_t pull_up_down_clock[2];
+	u_int32_t: 32;
 } gpio_peripherals;
 
 enum gpio_function {
@@ -108,26 +110,26 @@ enum gpio_function {
 };
 
 typedef struct {
-	char source: 4;
+	u_int8_t source: 4;
 	bool enable: 1;
 	bool kill: 1;
 	bool: 1;
 	bool busy: 1;
 	bool invert: 1;
-	char mash: 2;
-	short: 13;
-	char password: 8;
+	u_int8_t mash: 2;
+	u_int16_t: 13;
+	u_int8_t password: 8;
 } gpclock_control_register;
 
 typedef struct {
-	short floating_part: 12;
-	short integer_part: 12;
-	char password: 8;
+	u_int16_t floating_part: 12;
+	u_int16_t integer_part: 12;
+	u_int8_t password: 8;
 } gpclock_div_register;
 
 #define gpclock_password 0x5a
 
-typedef struct {
+typedef union {
 	gpclock_control_register control;
 	gpclock_div_register div;
 } gpclock_peripherals;
@@ -145,18 +147,18 @@ enum {
 
 #pragma pack()
 typedef struct {
-	unsigned int peripheral_base;
-	unsigned int peripheral_size;
-	unsigned int *peripherals;
+	u_int32_t peripheral_base;
+	u_int32_t peripheral_size;
+	u_int32_t *peripherals;
 	gpio_peripherals *gpio;
 	gpclock_peripherals *pwmclock;
 	pwm_peripherals *pwm;
 } bcm2835;
 
-bool gpio_set_function(gpio_peripherals *gpio, unsigned char pin, unsigned char function);
-bool gpio_write_line(gpio_peripherals *gpio, unsigned char pin, bool state);
-bool gpio_read_line(gpio_peripherals *gpio, unsigned char pin);
-bool gpclock_set_clock(gpclock_peripherals *gpclock, short integer, short floating);
+bool gpio_set_function(gpio_peripherals *gpio, u_int8_t pin, u_int8_t function);
+bool gpio_write_line(gpio_peripherals *gpio, u_int8_t pin, bool state);
+bool gpio_read_line(gpio_peripherals *gpio, u_int8_t pin);
+bool gpclock_set_clock(gpclock_peripherals *gpclock, u_int16_t integer, u_int16_t floating);
 void pwm_enable_channel(pwm_peripherals *pwm, bool channel, bool en);
 void pwm_set_mode(pwm_peripherals *pwm, bool channel, bool mode);
 void pwm_use_fifo(pwm_peripherals *pwm, bool channel, bool en);

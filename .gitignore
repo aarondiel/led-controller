@@ -1,5 +1,6 @@
 settings.env
 src/test.c
 build/*
+*.log
 test
 controller
