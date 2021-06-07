@@ -155,13 +155,10 @@ typedef struct {
 	pwm_peripherals *pwm;
 } bcm2835;
 
+void bcm2835_delay(u_int64_t millis);
 bool gpio_set_function(gpio_peripherals *gpio, u_int8_t pin, u_int8_t function);
 bool gpio_write_line(gpio_peripherals *gpio, u_int8_t pin, bool state);
 bool gpio_read_line(gpio_peripherals *gpio, u_int8_t pin);
 bool gpclock_set_clock(gpclock_peripherals *gpclock, u_int16_t integer, u_int16_t floating);
-void pwm_enable_channel(pwm_peripherals *pwm, bool channel, bool en);
-void pwm_set_mode(pwm_peripherals *pwm, bool channel, bool mode);
-void pwm_use_fifo(pwm_peripherals *pwm, bool channel, bool en);
-void pwm_enable_dma(pwm_peripherals *pwm, bool en);
 bcm2835 *bcm2835_open();
 void bcm2835_close(bcm2835 *chip);

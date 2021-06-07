@@ -1,6 +1,6 @@
 #include "bcm2835.h"
 
-static void bcm2835_delay(u_int64_t millis) {
+void bcm2835_delay(u_int64_t millis) {
 	struct timespec sleep_timer = {
 		.tv_sec = millis / 1000,
 		.tv_nsec = (millis % 1000) * 1000000
