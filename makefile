@@ -1,5 +1,4 @@
 CC 			:= gcc
-DIRS 		:= build
 CFLAGS 		:= $(shell cat ./compile_flags.txt)
 
 include ./settings.env
@@ -12,12 +11,8 @@ test: build/test.o build/bcm2835.o build/util.o
 	$(CC) $(CFLAGS) $^ -o $@
 
 build/%.o: src/%.c
-	make dirs
+	@mkdir -p build
 	$(CC) $(CFLAGS) -c $< -o $@
-
-.PHONY: dirs
-dirs:
-	mkdir -p $(DIRS)
 
 .PHONY: copy
 copy:

@@ -80,34 +80,6 @@ bool gpclock_set_clock(gpclock_peripherals *clock, u_int16_t integer, u_int16_t 
 	return 0;
 }
 
-void pwm_enable_channel(pwm_peripherals *pwm, bool channel, bool en) {
-	if (channel == 0)
-		pwm->control.power0 = en;
-
-	if (channel == 1)
-		pwm->control.power1 = en;
-}
-
-void pwm_set_mode(pwm_peripherals *pwm, bool channel, bool mode) {
-	if (channel == 0)
-		pwm->control.mode0 = mode;
-
-	if (channel == 1)
-		pwm->control.mode1 = mode;
-}
-
-void pwm_use_fifo(pwm_peripherals *pwm, bool channel, bool en) {
-	if (channel == 0)
-		pwm->control.use_fifo0 = en;
-
-	if (channel == 1)
-		pwm->control.use_fifo1 = en;
-}
-
-void pwm_enable_dma(pwm_peripherals *pwm, bool en) {
-	pwm->dma.enable = en;
-}
-
 bcm2835 *bcm2835_open() {
 	bcm2835 *chip = malloc(sizeof(bcm2835));
 	FILE *fp = fopen("/proc/device-tree/soc/ranges", "rb");
